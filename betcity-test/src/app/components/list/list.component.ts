@@ -1,10 +1,10 @@
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {debounceTime, map, takeUntil} from "rxjs/operators";
-import {BehaviorSubject, combineLatest, Observable, of, Subject} from "rxjs";
-import {FormBuilder, FormControl, FormGroup} from "@angular/forms";
-import {isNullOrUndefined} from "util";
-import {ListInterface, ListService} from "../../list.service";
-import {PerfectScrollbarDirective} from "ngx-perfect-scrollbar";
+import {debounceTime, map, takeUntil} from 'rxjs/operators';
+import {BehaviorSubject, Observable, Subject} from 'rxjs';
+import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
+import {isNullOrUndefined} from 'util';
+import {ListInterface, ListService} from '../../list.service';
+import {PerfectScrollbarDirective} from 'ngx-perfect-scrollbar';
 
 const LOCAL_STORAGE_KEY = 'betCityList';
 
@@ -49,7 +49,7 @@ export class ListComponent implements OnInit, OnDestroy {
 				this.list$ = this.resultsItem$
 					.pipe(
 						map(i => {
-							return i.filter(j => this.favouriteItems$.value.includes(j.id))
+							return i.filter(j => this.favouriteItems$.value.includes(j.id));
 						})
 					);
 			} else {
@@ -72,7 +72,7 @@ export class ListComponent implements OnInit, OnDestroy {
 			.subscribe(query => {
 				console.log(query, this.resultsItem$.value);
 				if (!isNullOrUndefined(query)) {
-					 return this.resultsItem$.pipe(
+					return this.resultsItem$.pipe(
 						map(items => items.filter(i => i.title.toLowerCase().indexOf(query.toLowerCase()) >= 0))
 					);
 				}
@@ -147,14 +147,14 @@ export class ListComponent implements OnInit, OnDestroy {
 }
 
 function responseToModel(response: any, isFavourite?: boolean) {
-	return <ListItemInterface>{
+	return <ListItemInterface> {
 		id: response.id,
 		title: response.snippet.title,
 		chanelTitle: response.snippet.chanelTitle,
 		description: response.snippet.description,
 		playListId: response.snippet.playListId,
 		isFavourite: isFavourite ? isFavourite : false
-	}
+	};
 }
 
 export interface ListItemInterface {
