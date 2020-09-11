@@ -1,0 +1,39 @@
+<h2>Плейлист для занятий боксом</h2>
+<div [formGroup]="formGroup" class="filters-wrapper">
+	<div class="filter">
+		<label>
+			Фильтр по названию:
+			<input formControlName="filterTitle" type="text" class="input-text"/>
+		</label>
+	</div>
+	<div class="filter">
+		<label for="pageSize">Загружать в список по:</label>
+		<select id="pageSize" formControlName="pagingSize">
+			<option value="20">20</option>
+			<option value="30">30</option>
+			<option value="50">50</option>
+		</select>
+	</div>
+	<div class="filter">
+		<label for="favourites">Отобразить избранные</label>
+		<input type="checkbox" id="favourites" formControlName="onlyFavourites" />
+	</div>
+</div>
+<div #perfectScroll
+     (scrolled)="onScroll()"
+	 [infiniteScrollDistance]="1"
+	 [infiniteScrollThrottle]="150"
+	 [infiniteScrollDisabled]="isNoMoreData() && isBusy$ | async"
+	 [perfectScrollbar]="{suppressScrollX: false}"
+	 [scrollWindow]="false"
+	 class="ps list"
+	 infinite-scroll>
+	<div *ngFor="let item of list$ | async; trackBy: trackByFn"
+		 class="list-item">
+			<span>{{item.title}}</span>
+			<span class="ico-is-favourite" (click)="toggleFavourite(item)">
+				<mat-icon [inline]="true" class="icon">{{item.isFavourite ? 'favorite' : 'favorite_border'}}</mat-icon>
+			</span>
+	</div>
+	<app-busy-indicator [isBusy]="isBusy$ | async"></app-busy-indicator>
+</div>

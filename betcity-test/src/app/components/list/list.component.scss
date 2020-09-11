@@ -1,0 +1,59 @@
+label {
+	cursor: pointer;
+	margin-right: 10px;
+}
+
+:host {
+	.list {
+		min-height: 40px;
+		max-height: 400px;
+		width: 900px;
+		position: relative;
+		background-color: white;
+		border: 1px solid #CFD8DC;
+
+		.list-item {
+			display: flex;
+			line-height: 1.5;
+			color: dodgerblue;
+			padding: 6px 24px;
+			border-bottom: 1px solid #CFD8DC;
+			align-items: center;
+			justify-content: space-between;
+
+			&:last-of-type {
+				border-bottom: none;
+			}
+
+			.ico-is-favourite {
+				cursor: pointer;
+
+				.icon {
+					width: 16px;
+					height: 16px;
+				}
+			}
+		}
+	}
+
+	.filters-wrapper {
+		display: flex;
+		padding: 8px;
+		color: grey;
+	}
+
+	.filter {
+		padding: 0 20px 10px 0;
+	}
+
+	.input-text {
+		padding: 3px 5px;
+		border: 1px solid #CFD8DC;
+		color: grey;
+
+		&:focus {
+			outline: none;
+			border: 1px solid dodgerblue;
+		}
+	}
+}
