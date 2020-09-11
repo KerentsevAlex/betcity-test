@@ -12,6 +12,7 @@ import {InfiniteScrollModule} from 'ngx-infinite-scroll';
 import {BusyIndicatorComponent} from './components/busy-indicator/busy-indicator.component';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {MatIconModule} from '@angular/material';
+import {ScrollingModule} from '@angular/cdk/scrolling';
 
 const DEFAULT_PERFECT_SCROLLBAR_CONFIG: PerfectScrollbarConfigInterface = {
 	suppressScrollX: false
@@ -32,7 +33,8 @@ const DEFAULT_PERFECT_SCROLLBAR_CONFIG: PerfectScrollbarConfigInterface = {
 		PerfectScrollbarModule,
 		InfiniteScrollModule,
 		BrowserAnimationsModule,
-		MatIconModule
+		MatIconModule,
+		ScrollingModule
 	],
 	exports: [
 		MatIconModule

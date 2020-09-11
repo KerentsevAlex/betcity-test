@@ -1,10 +1,10 @@
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {debounceTime, map, takeUntil} from 'rxjs/operators';
+import {map, takeUntil} from 'rxjs/operators';
 import {BehaviorSubject, Observable, Subject} from 'rxjs';
 import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
 import {isNullOrUndefined} from 'util';
 import {ListInterface, ListService} from '../../list.service';
-import {PerfectScrollbarDirective} from 'ngx-perfect-scrollbar';
+import {CdkVirtualScrollViewport} from '@angular/cdk/scrolling';
 
 const LOCAL_STORAGE_KEY = 'betCityList';
 
@@ -21,8 +21,8 @@ export class ListComponent implements OnInit, OnDestroy {
 	public list$: Observable<ListItemInterface[]>;
 	public formGroup: FormGroup;
 	public isBusy$ = new Subject<boolean>();
-	@ViewChild('perfectScroll', {static: false})
-	private _perfectScrollbar: PerfectScrollbarDirective;
+	@ViewChild('virtualScroll', {static: false})
+	private _virtualScroll: CdkVirtualScrollViewport;
 	private _destroy$ = new Subject();
 	private _nextPageToken = null;
 	private _totalResults = 0;
@@ -45,17 +45,18 @@ export class ListComponent implements OnInit, OnDestroy {
 			.pipe(
 				takeUntil(this._destroy$)
 			).subscribe(value => {
-			if (value) {
-				this.list$ = this.resultsItem$
-					.pipe(
-						map(i => {
-							return i.filter(j => this.favouriteItems$.value.includes(j.id));
-						})
-					);
-			} else {
-				this.list$ = this.resultsItem$;
-			}
-		});
+				this.formGroup.get('filterTitle').patchValue(null);
+				if (value) {
+					this.list$ = this.resultsItem$
+						.pipe(
+							map(i => {
+								return i.filter(j => this.favouriteItems$.value.includes(j.id));
+							})
+						);
+				} else {
+					this.list$ = this.resultsItem$;
+				}
+			});
 
 		this.formGroup.get('pagingSize').valueChanges
 			.pipe(
@@ -67,23 +68,14 @@ export class ListComponent implements OnInit, OnDestroy {
 		this.formGroup.get('filterTitle').valueChanges
 			.pipe(
 				takeUntil(this._destroy$),
-				debounceTime(500)
 			)
 			.subscribe(query => {
-				console.log(query, this.resultsItem$.value);
 				if (!isNullOrUndefined(query)) {
-					return this.resultsItem$.pipe(
+					this.list$ = this.resultsItem$.pipe(
 						map(items => items.filter(i => i.title.toLowerCase().indexOf(query.toLowerCase()) >= 0))
 					);
 				}
 			});
-
-		// this.list$ = combineLatest([this.formGroup.valueChanges, this.resultsItem$])
-		// 	.pipe(map(([formGroupChanges, items]) => {
-		// 			console.log(formGroupChanges);
-		// 			return items.filter(item => item.title.toLowerCase().indexOf(formGroupChanges.filterTitle.toLowerCase()) >= 0);
-		// 		})
-		// 	);
 	}
 
 	ngOnInit() {
@@ -95,7 +87,8 @@ export class ListComponent implements OnInit, OnDestroy {
 		return item.id;
 	}
 
-	public onScroll() {
+	public onScroll(event) {
+		console.log('scroll', event);
 		if ((this._totalResults > this.resultsItem$.value.length)
 			&& isNullOrUndefined(this.formGroup.get('filterTitle').value)) {
 			this.getList(this.formGroup.controls['pagingSize'].value, this._nextPageToken);
@@ -135,9 +128,9 @@ export class ListComponent implements OnInit, OnDestroy {
 				resultModels = this.resultsItem$.value.concat(resultModels);
 			}
 			this.resultsItem$.next(resultModels);
-			// if (!nextPageToken) {
-			// 	this._perfectScrollbar.update();
-			// }
+			if (!nextPageToken) {
+				this._virtualScroll.scrollToIndex(0);
+			}
 		});
 	}
 

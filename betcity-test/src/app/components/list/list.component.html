@@ -19,21 +19,18 @@
 		<input type="checkbox" id="favourites" formControlName="onlyFavourites" />
 	</div>
 </div>
-<div #perfectScroll
-     (scrolled)="onScroll()"
-	 [infiniteScrollDistance]="1"
-	 [infiniteScrollThrottle]="150"
-	 [infiniteScrollDisabled]="isNoMoreData() && isBusy$ | async"
-	 [perfectScrollbar]="{suppressScrollX: false}"
-	 [scrollWindow]="false"
-	 class="ps list"
-	 infinite-scroll>
-	<div *ngFor="let item of list$ | async; trackBy: trackByFn"
+<cdk-virtual-scroll-viewport class="list" itemSize="40"
+							 #virtualScroll
+							 infinite-scroll
+							 [infiniteScrollDistance]="1"
+							 [infiniteScrollThrottle]="150"
+							 (scrolledIndexChange)="onScroll($event)">
+	<div *cdkVirtualFor="let item of list$ | async"
 		 class="list-item">
-			<span>{{item.title}}</span>
-			<span class="ico-is-favourite" (click)="toggleFavourite(item)">
+		<span>{{item.title}}</span>
+		<span class="ico-is-favourite" (click)="toggleFavourite(item)">
 				<mat-icon [inline]="true" class="icon">{{item.isFavourite ? 'favorite' : 'favorite_border'}}</mat-icon>
 			</span>
 	</div>
 	<app-busy-indicator [isBusy]="isBusy$ | async"></app-busy-indicator>
-</div>
+</cdk-virtual-scroll-viewport>
