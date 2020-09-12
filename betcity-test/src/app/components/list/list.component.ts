@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {map, takeUntil} from 'rxjs/operators';
-import {BehaviorSubject, Observable, Subject} from 'rxjs';
+import {catchError, finalize, map, takeUntil} from 'rxjs/operators';
+import {BehaviorSubject, EMPTY, Observable, Subject} from 'rxjs';
 import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
 import {isNullOrUndefined} from 'util';
 import {ListInterface, ListService} from '../../list.service';
@@ -20,6 +20,7 @@ export class ListComponent implements OnInit, OnDestroy {
 	public favouriteItems$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
 	public list$: Observable<ListItemInterface[]>;
 	public formGroup: FormGroup;
+	public itemSize = 40;
 	public isBusy$ = new Subject<boolean>();
 	@ViewChild('virtualScroll', {static: false})
 	private _virtualScroll: CdkVirtualScrollViewport;
@@ -45,18 +46,18 @@ export class ListComponent implements OnInit, OnDestroy {
 			.pipe(
 				takeUntil(this._destroy$)
 			).subscribe(value => {
-				this.formGroup.get('filterTitle').patchValue(null);
-				if (value) {
-					this.list$ = this.resultsItem$
-						.pipe(
-							map(i => {
-								return i.filter(j => this.favouriteItems$.value.includes(j.id));
-							})
-						);
-				} else {
-					this.list$ = this.resultsItem$;
-				}
-			});
+			this.formGroup.get('filterTitle').patchValue(null);
+			if (value) {
+				this.list$ = this.resultsItem$
+					.pipe(
+						map(i => {
+							return i.filter(j => this.favouriteItems$.value.includes(j.id));
+						})
+					);
+			} else {
+				this.list$ = this.resultsItem$;
+			}
+		});
 
 		this.formGroup.get('pagingSize').valueChanges
 			.pipe(
@@ -88,15 +89,13 @@ export class ListComponent implements OnInit, OnDestroy {
 	}
 
 	public onScroll(event) {
-		console.log('scroll', event);
-		if ((this._totalResults > this.resultsItem$.value.length)
-			&& isNullOrUndefined(this.formGroup.get('filterTitle').value)) {
+		const total = this._virtualScroll.getDataLength();
+		const buffer = Math.floor(this._virtualScroll.getViewportSize() / this.itemSize);
+		if ((this._totalResults > this.resultsItem$.value.length + 1)
+			&& isNullOrUndefined(this.formGroup.get('filterTitle').value)
+			&& (total <= event + buffer)) {
 			this.getList(this.formGroup.controls['pagingSize'].value, this._nextPageToken);
 		}
-	}
-
-	public isNoMoreData(): boolean {
-		return this._totalResults === this.resultsItem$.value.length;
 	}
 
 	public toggleFavourite(itemList: ListItemInterface) {
@@ -119,18 +118,22 @@ export class ListComponent implements OnInit, OnDestroy {
 
 	private getList(limit: string, nextPageToken: string) {
 		this.isBusy$.next(true);
-		this._listService.getList(limit, nextPageToken).subscribe((response: ListInterface) => {
-			this.isBusy$.next(false);
-			this._nextPageToken = response.nextPageToken;
-			this._totalResults = response.pageInfo.totalResults;
-			let resultModels = response.items.map(i => responseToModel(i, this.isFavouriteItem(i.id)));
-			if (nextPageToken) {
-				resultModels = this.resultsItem$.value.concat(resultModels);
-			}
-			this.resultsItem$.next(resultModels);
-			if (!nextPageToken) {
-				this._virtualScroll.scrollToIndex(0);
-			}
+		this._listService.getList(limit, nextPageToken)
+			.pipe(
+				catchError(() => EMPTY),
+				finalize(() => this.isBusy$.next(false))
+			)
+			.subscribe((response: ListInterface) => {
+				this._nextPageToken = response.nextPageToken;
+				this._totalResults = response.pageInfo.totalResults;
+				let resultModels = response.items.map(i => responseToModel(i, this.isFavouriteItem(i.id)));
+				if (nextPageToken) {
+					resultModels = this.resultsItem$.value.concat(resultModels);
+				}
+				this.resultsItem$.next(resultModels);
+				if (!nextPageToken) {
+					this._virtualScroll.scrollToIndex(0);
+				}
 		});
 	}
 
@@ -151,7 +154,7 @@ function responseToModel(response: any, isFavourite?: boolean) {
 }
 
 export interface ListItemInterface {
-	id: string,
+	id: string;
 	chanelTitle: string;
 	description: string;
 	playListId: string;
